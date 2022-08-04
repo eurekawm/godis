@@ -53,6 +53,7 @@ func (echoHandler *EchoHandler) Handle(ctx context.Context, conn net.Conn) {
 		}
 		// 开始做业务
 		client.Waiting.Add(1)
+		logger.Info("replay client: ", msg)
 		b := []byte(msg)
 		_, _ = conn.Write(b)
 		client.Waiting.Done()
@@ -69,4 +70,7 @@ func (echoHandler *EchoHandler) Close() error {
 		return true
 	})
 	return nil
+}
+func MakerHandler() *EchoHandler {
+	return &EchoHandler{}
 }
