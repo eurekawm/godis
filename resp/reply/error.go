@@ -39,11 +39,10 @@ func MakeArgNumErrReply(cmd string) *ArgNumErrReply {
 type SyntaxErrReply struct{}
 
 var syntaxErrBytes = []byte("-Err syntax error\r\n")
-var theSyntaxErrReply = &SyntaxErrReply{}
 
 // MakeSyntaxErrReply creates syntax error
 func MakeSyntaxErrReply() *SyntaxErrReply {
-	return theSyntaxErrReply
+	return &SyntaxErrReply{}
 }
 
 // ToBytes marshals redis.Reply
@@ -60,6 +59,10 @@ type WrongTypeErrReply struct{}
 
 var wrongTypeErrBytes = []byte("-WRONGTYPE Operation against a key holding the wrong kind of value\r\n")
 
+func (r *WrongTypeErrReply) MakeWrongTypeErrReply() *WrongTypeErrReply {
+	return &WrongTypeErrReply{}
+}
+
 // ToBytes marshals redis.Reply
 func (r *WrongTypeErrReply) ToBytes() []byte {
 	return wrongTypeErrBytes
@@ -68,8 +71,6 @@ func (r *WrongTypeErrReply) ToBytes() []byte {
 func (r *WrongTypeErrReply) Error() string {
 	return "WRONGTYPE Operation against a key holding the wrong kind of value"
 }
-
-// ProtocolErr
 
 // ProtocolErrReply represents meeting unexpected byte during parse requests
 type ProtocolErrReply struct {
@@ -83,4 +84,8 @@ func (r *ProtocolErrReply) ToBytes() []byte {
 
 func (r *ProtocolErrReply) Error() string {
 	return "ERR Protocol error: '" + r.Msg
+}
+
+func (r *ProtocolErrReply) MakeProtocolErrorReply() *ProtocolErrReply {
+	return &ProtocolErrReply{}
 }

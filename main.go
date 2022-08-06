@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/eurekawm/godis/config"
 	"github.com/eurekawm/godis/lib/logger"
+	"github.com/eurekawm/godis/resp/handler"
 	"github.com/eurekawm/godis/tcp"
 	"os"
 )
@@ -40,7 +41,7 @@ func main() {
 				config.Properties.Bind,
 				config.Properties.Port),
 		},
-		tcp.MakerHandler())
+		handler.MakeHandler())
 	if err != nil {
 		logger.Error(err)
 	}

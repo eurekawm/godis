@@ -11,6 +11,12 @@ var (
 	CRLF               = "\r\n"
 )
 
+type ErrorReply interface {
+	Error() string
+	ToBytes() []byte
+}
+
+// BulkReply 回复一个字符串
 type BulkReply struct {
 	Arg []byte // "hello $5\r\nhello\r\n"
 }
@@ -43,6 +49,7 @@ func (m *MultiBulkReply) ToBytes() []byte {
 	}
 	return buf.Bytes()
 }
+
 func MakeMultiBulkReply(arg [][]byte) *MultiBulkReply {
 	return &MultiBulkReply{Args: arg}
 }
@@ -66,16 +73,13 @@ type IntReply struct {
 func (r *IntReply) ToBytes() []byte {
 	return []byte(":" + strconv.FormatInt(r.Code, 10) + CRLF)
 }
+
 func MakeIntReply(code int64) *IntReply {
 	return &IntReply{
 		Code: code,
 	}
 }
 
-type ErrorReply interface {
-	Error() string
-	ToBytes() []byte
-}
 type StandardErrorReply struct {
 	Status string
 }
@@ -83,9 +87,11 @@ type StandardErrorReply struct {
 func (r *StandardErrorReply) ToBytes() []byte {
 	return []byte("-" + r.Status + CRLF)
 }
-func MakeStandardErrorReply(status string) *StandardErrorReply {
+
+func MakeErrorReply(status string) *StandardErrorReply {
 	return &StandardErrorReply{Status: status}
 }
+
 func IsErrorReply(reply resp.Reply) bool {
 	return reply.ToBytes()[0] == '-'
 }
