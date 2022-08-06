@@ -144,30 +144,27 @@ func parse0(reader io.Reader, ch chan<- *Payload) {
 //  @return bool   是否有io错误
 //  @return error  返回的error
 //
-func readLine(reader *bufio.Reader, state *readState) ([]byte, bool, error) {
+func readLine(bufReader *bufio.Reader, state *readState) ([]byte, bool, error) {
 	var msg []byte
 	var err error
-
-	if state.bulkLen == 0 {
-
-		msg, err = reader.ReadBytes('\n')
+	if state.bulkLen == 0 { // read normal line
+		msg, err = bufReader.ReadBytes('\n')
 		if err != nil {
 			return nil, true, err
 		}
 		if len(msg) == 0 || msg[len(msg)-2] != '\r' {
-			return nil, false, errors.New("protocol error")
+			return nil, false, errors.New("protocol error: " + string(msg))
 		}
-	} else {
-		// 2如果之前读到了$数字 严格读取字符个数
-		// 实际内容+2 /r/n
+	} else { // read bulk line (binary safe)
 		msg = make([]byte, state.bulkLen+2)
-		_, err = io.ReadFull(reader, msg)
+		_, err = io.ReadFull(bufReader, msg)
 		if err != nil {
 			return nil, true, err
 		}
-		// 不是 \r\n结尾或者是没有内容 协议有问题
-		if len(msg) == 0 || msg[len(msg)-2] == '\r' || msg[len(msg)-1] == '\n' {
-			return nil, false, errors.New("protocol error")
+		if len(msg) == 0 ||
+			msg[len(msg)-2] != '\r' ||
+			msg[len(msg)-1] != '\n' {
+			return nil, false, errors.New("protocol error: " + string(msg))
 		}
 		state.bulkLen = 0
 	}
@@ -218,22 +215,17 @@ func parseMultiBulkHeader(msg []byte, state *readState) error {
 //
 func parseBulkHeader(msg []byte, state *readState) error {
 	var err error
-	logger.Info("bulklen is: " + string(msg[1:len(msg)-2]))
+	logger.Info("bulkLen is: " + string(msg[1:len(msg)-2]))
 	state.bulkLen, err = strconv.ParseInt(string(msg[1:len(msg)-2]), 10, 64)
 	if err != nil {
 		return errors.New("protocol error: " + string(msg))
 	}
-	// *3\r\n$3\r\nSET\r\n$3\r\nkey\r\n$5value\r\n
 	if state.bulkLen == -1 { // null bulk
 		return nil
 	} else if state.bulkLen > 0 {
-		// 正在读行 $
 		state.msgType = msg[0]
-		// 多行读取中
 		state.readingMultiLine = true
-		// 期待有几个命令 既然是$一定只有一个
 		state.expectedArgsCount = 1
-		// 读取到的具体命令 比如 set
 		state.args = make([][]byte, 0, 1)
 		return nil
 	} else {

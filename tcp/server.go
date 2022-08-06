@@ -33,7 +33,7 @@ func ListenAndServeWithSignal(cfg *Config, handler tcp.Handler) error {
 	if err != nil {
 		return err
 	}
-	logger.Info("start listen")
+	logger.Info("start listen at :[" + cfg.Address + "]")
 	ListenAndServe(listener, handler, closeChan)
 	return nil
 }
