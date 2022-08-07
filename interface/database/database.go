@@ -10,5 +10,5 @@ type Database interface {
 	AfterClientClose(c resp.Connection)
 }
 type DataEntity struct {
-	Date interface{}
+	Data interface{}
 }
